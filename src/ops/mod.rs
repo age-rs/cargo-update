@@ -830,10 +830,10 @@ impl PackageFilterElement {
         match self.1 {
             PackageFilterElementValue::Toolchain(ref chain) => Some(chain) == cfg.toolchain.as_ref(),
             PackageFilterElementValue::Name(ref glob) => match &glob[..] {
-                [] => false,
+                [] => true /* unreachable */,
                 [exact] => exact == name,
                 [front, back] => name.starts_with(front) && name.ends_with(back),
-                [front, chunks @ .., back] => matchglob(name, front, chunks , back),
+                [front, chunks @ .., back] => matchglob(name, front, chunks, back),
             },
         }
     }
