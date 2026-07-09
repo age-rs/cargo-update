@@ -137,11 +137,9 @@ impl Options {
                             .required(false)
                             .num_args(1)
                             .value_parser(JobsParser("default", nproc)),
-                        arg!(-J --"recursive-jobs" <JOBS>)
+                        arg!(-J --"recursive-jobs" [JOBS])
                             .help(format!("Build up to JOBS crates at once on up to JOBS CPUs. {} if empty.", nproc))
                             .required(false)
-                            .num_args(1)
-                            .default_value("")
                             .value_parser(JobsParser("", nproc)),
                         Arg::new("cargo_install_opts")
                             .long("__cargo_install_opts")
