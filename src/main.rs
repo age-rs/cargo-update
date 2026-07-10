@@ -23,7 +23,6 @@ fn main() {
 
 fn actual_main() -> Result<(), i32> {
     let opts = cargo_update::Options::parse();
-    dbg!(&opts);
 
     if cfg!(target_os = "windows") {
         for old_version in fs::read_dir(env::current_exe().unwrap().parent().unwrap().canonicalize().unwrap())
