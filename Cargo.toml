@@ -8,7 +8,7 @@ categories = ["development-tools::cargo-plugins"]
 license = "MIT"
 build = "build.rs"
 # Remember to also update in appveyor.yml
-version = "21.0.1"
+version = "21.0.2"
 # Remember to also update in man/*.md
 authors = ["наб <nabijaczleweli@nabijaczleweli.xyz>",
            "Yann Simon <yann.simon.fr@gmail.com>",
@@ -18,7 +18,7 @@ authors = ["наб <nabijaczleweli@nabijaczleweli.xyz>",
            "azyobuzin <azyobuzin@users.sourceforge.jp>",
            "Tatsuyuki Ishi <ishitatsuyuki@gmail.com>",
            "Tom Prince <tom.prince@twistedmatrix.com>",
-           "Mateusz Mikuła <mati865@gmail.com>",
+           "Mateusz Mikuła <oss@mateuszmikula.dev>",
            "sinkuu <sinkuupump@gmail.com>",
            "Alex Burka <aburka@seas.upenn.edu>",
            "Matthias Krüger <matthias.krueger@famsik.de>",
