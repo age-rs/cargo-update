@@ -1639,10 +1639,9 @@ impl<'sr> SparseRegistryAuthProviderBundle<'sr> {
 }
 
 /// Collect everything needed to get an authentication token for the given registry.
-pub fn auth_providers<'sr>(crates_file: &Path, install_cargo: Option<&'sr OsStr>, sparse_registries: &'sr SparseRegistryConfig, sparse: bool,
+pub fn auth_providers<'sr>(crates_file: &Path, cargo: &'sr OsStr, sparse_registries: &'sr SparseRegistryConfig, sparse: bool,
                            repo_name: &'sr str, repo_url: &'sr str)
                            -> SparseRegistryAuthProviderBundle<'sr> {
-    let cargo = install_cargo.unwrap_or(OsStr::new("cargo"));
     if !sparse {
         return SparseRegistryAuthProviderBundle(vec![].into(), cargo, "!sparse", "!sparse".into(), None, None);
     }

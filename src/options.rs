@@ -63,8 +63,8 @@ pub struct Options {
     pub temp_dir: PathBuf,
     /// Arbitrary arguments to forward to `cargo install`, acquired from `$CARGO_INSTALL_OPTS`. Default: `[]`
     pub cargo_install_args: Vec<OsString>,
-    /// The cargo to run for installations. Default: `None` (use "cargo")
-    pub install_cargo: Option<OsString>,
+    /// The cargo to run for installations, and whether it was overridden. Default: `(false, "${CARGO-cargo}")`.
+    pub install_cargo: (bool, Cow<'static, OsStr>),
     /// `cargo install -j` argument. Default: `None`
     pub jobs: Option<NonZero<usize>>,
     /// Start jobserver to fill this many CPUs. Default: `None`
@@ -192,7 +192,10 @@ impl Options {
             cargo_dir: cargo_dir(matches.remove_one("cargo-dir")),
             temp_dir: matches.remove_one("temp-dir").unwrap_or_else(env::temp_dir).join(Path::new("cargo-update").with_extension(username_os())),
             cargo_install_args: matches.remove_many("cargo_install_opts").into_iter().flatten().filter(|a: &OsString| !a.is_empty()).collect(),
-            install_cargo: matches.remove_one("install-cargo"),
+            install_cargo: match matches.remove_one("install-cargo") {
+                Some(ic) => (true, Cow::Owned(ic)),
+                None => (false, env::var_os("CARGO").map(Cow::Owned).unwrap_or(OsStr::new("cargo").into())),
+            },
             jobs: if recursive_jobs.is_some() {
                 None
             } else {

@@ -6,7 +6,6 @@ extern crate git2;
 use std::io::{ErrorKind as IoErrorKind, Write, stdout, sink};
 use std::fmt::{self, Formatter, Display};
 use std::process::{Command, exit};
-use std::ffi::{OsString, OsStr};
 use std::collections::BTreeMap;
 use std::iter::FromIterator;
 use tabwriter::TabWriter;
@@ -124,7 +123,7 @@ fn actual_main() -> Result<(), i32> {
     }))?;
     for (i, mut registry_repo) in registry_repos.iter_mut().enumerate() {
         let auth_providers = cargo_update::ops::auth_providers(&crates_file,
-                                                               opts.install_cargo.as_ref().map(OsString::as_os_str),
+                                                               &opts.install_cargo.1,
                                                                &cargo_config.sparse_registries,
                                                                (registry_urls[i].0).1,
                                                                &(registry_urls[i].0).2,
@@ -275,7 +274,7 @@ fn actual_main() -> Result<(), i32> {
                             };
                             let install_res = {
                                     let cfg = configuration.get(&package.name);
-                                    if opts.install_cargo == None && registry_name == "crates-io" && opts.cargo_install_args.is_empty() &&
+                                    if !opts.install_cargo.0 && registry_name == "crates-io" && opts.cargo_install_args.is_empty() &&
                                        (cfg == None || cfg == Some(&Default::default())) {
                                             jobserverise(Command::new("cargo-binstall"))
                                                 .arg("--roots")
@@ -292,7 +291,7 @@ fn actual_main() -> Result<(), i32> {
                                             Err(IoErrorKind::NotFound.into())
                                         }
                                         .or_else(|_| if let Some(cfg) = cfg {
-                                            let mut cmd = jobserverise(Command::new(&opts.install_cargo.as_deref().unwrap_or(OsStr::new("cargo"))));
+                                            let mut cmd = jobserverise(Command::new(&opts.install_cargo.1));
                                             cfg.environmentalise(&mut cmd)
                                                 .args(cfg.cargo_args(&package.executables).iter().map(AsRef::as_ref))
                                                 .arg("--root")
@@ -314,7 +313,7 @@ fn actual_main() -> Result<(), i32> {
                                                 .args(&opts.cargo_install_args)
                                                 .status()
                                         } else {
-                                            let mut cmd = jobserverise(Command::new(&opts.install_cargo.as_deref().unwrap_or(OsStr::new("cargo"))));
+                                            let mut cmd = jobserverise(Command::new(&opts.install_cargo.1));
                                             cmd.arg("install")
                                                 .arg("--root")
                                                 .arg(&opts.cargo_dir.0)
@@ -433,7 +432,7 @@ fn actual_main() -> Result<(), i32> {
                                 }
 
                                 let install_res = if let Some(cfg) = configuration.get(&package.name) {
-                                        let mut cmd = Command::new(&opts.install_cargo.as_deref().unwrap_or(OsStr::new("cargo")));
+                                        let mut cmd = Command::new(&opts.install_cargo.1);
                                         cmd.args(cfg.cargo_args(package.executables).iter().map(AsRef::as_ref))
                                             .arg("--root")
                                             .arg(&opts.cargo_dir.0)
@@ -450,7 +449,7 @@ fn actual_main() -> Result<(), i32> {
                                         }
                                         cmd.args(&opts.cargo_install_args).status()
                                     } else {
-                                        let mut cmd = Command::new(&opts.install_cargo.as_deref().unwrap_or(OsStr::new("cargo")));
+                                        let mut cmd = Command::new(&opts.install_cargo.1);
                                         cmd.arg("install")
                                             .arg("--root")
                                             .arg(&opts.cargo_dir.0)
