@@ -1449,13 +1449,13 @@ pub struct SparseRegistryAuthProviderBundle<'sr>(pub Cow<'sr, [SparseRegistryAut
                                                  pub Option<&'sr str>);
 impl<'sr> SparseRegistryAuthProviderBundle<'sr> {
     pub fn try(&self) -> Option<Cow<'sr, str>> {
-        let (install_cargo, repo_name, repo_url, token_env, token) = (self.1, self.2, &self.3, self.4, self.5);
-        self.0
+        let SparseRegistryAuthProviderBundle(providers, install_cargo, repo_name, repo_url, token_env, token) = self;
+        providers
             .iter()
             .rev()
             .find_map(|p| match p {
                 SparseRegistryAuthProvider::TokenNoEnvironment => token.map(Cow::from),
-                SparseRegistryAuthProvider::Token => token_env.or(token).map(Cow::from),
+                SparseRegistryAuthProvider::Token => token_env.or(*token).map(Cow::from),
                 SparseRegistryAuthProvider::Wincred => {
                     #[allow(unused_mut)]
                     let mut ret = None;
