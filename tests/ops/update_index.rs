@@ -17,7 +17,7 @@ fn truncated_not() {
 
     assert_eq!(String::from_utf8(out).unwrap(), format!("    Polling registry '{}'.\n\n", url));
     let Registry::Sparse(pkgs) = reg else { panic!() };
-    assert_eq!(pkgs, expecting());
+    assert_eq!(pkgs, expecting(true));
 }
 
 #[test]
@@ -27,17 +27,27 @@ fn truncated_workaround() {
 
     let url = sparse_registry_from("kellnr", "cargo-update", "test-data/341/kellnr.last2");
     assert_eq!(ops::update_index(&mut reg, &url, ["cargo-update"].iter(), None, false, &Default::default(), None, &mut out),
-               Err("package cargo-update: 3019 bytes of trailing garbage".into()));
+               Ok(()));
 
-    assert_eq!(String::from_utf8(out).unwrap(), format!("    Polling registry '{}'.\n", url));
+    assert_eq!(String::from_utf8(out).unwrap(), format!("    Polling registry '{}'.\n\n", url));
     let Registry::Sparse(pkgs) = reg else { panic!() };
-    assert_eq!(pkgs, Default::default());
+    assert_eq!(pkgs, expecting(false));
 }
 
-fn expecting() -> BTreeMap<String, Vec<(Semver, Option<DateTime<FixedOffset>>)>> {
+fn expecting(dates: bool) -> BTreeMap<String, Vec<(Semver, Option<DateTime<FixedOffset>>)>> {
     [("cargo-update".to_string(),
-      vec![("21.0.2".parse().unwrap(), Some("2026-07-10T15:30:20Z".parse().unwrap())),
-           ("22.0.0".parse().unwrap(), Some("2026-07-12T22:56:06Z".parse().unwrap()))])]
+      vec![("21.0.2".parse().unwrap(),
+            if dates {
+                Some("2026-07-10T15:30:20Z".parse().unwrap())
+            } else {
+                None
+            }),
+           ("22.0.0".parse().unwrap(),
+            if dates {
+                Some("2026-07-12T22:56:06Z".parse().unwrap())
+            } else {
+                None
+            })])]
         .into()
 }
 

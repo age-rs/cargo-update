@@ -1849,7 +1849,14 @@ pub fn update_index<W: Write, A: AsRef<str>, I: Iterator<Item = A>>(index_repo: 
                                 mem::replace(&mut c.0.as_mut().unwrap().get_mut().1, Err("taken".into())).map_err(|e| format!("package {}: {}", pkg, e))?;
                             mem::replace(&mut c.1, Ok(())).map_err(|e| format!("package {}: {}", pkg, e))?;
                             if !buf.is_empty() {
-                                return Err(format!("package {}: {} bytes of trailing garbage", pkg, buf.len()))?;
+                                if c.0.as_ref().unwrap().get_ref().3.is_some() {
+                                    return Err(format!("package {}: {} bytes of trailing garbage", pkg, buf.len()))?;
+                                } else {
+                                    // Some broken registries (kellnr <https://github.com/nabijaczleweli/cargo-update/pull/341>)
+                                    // return a complete response that's 1 byte too short;
+                                    // if curl told us we managed to read the whole response, try pretending to append it back
+                                    resp.extend(crate_version_line(&buf).map_err(|e| format!("package {}: trailing garbage as crate version: {}", pkg, e))?);
+                                }
                             }
                             resp.sort();
                             sucker.remove2(c.0.take().unwrap()).map_err(|e| format!("remove2: {}", e))?;
