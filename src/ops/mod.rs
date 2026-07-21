@@ -829,12 +829,14 @@ impl PackageFilterElement {
         self.0 ^
         match self.1 {
             PackageFilterElementValue::Toolchain(ref chain) => Some(chain) == cfg.toolchain.as_ref(),
-            PackageFilterElementValue::Name(ref glob) => match &glob[..] {
+            PackageFilterElementValue::Name(ref glob) => {
+                match &glob[..] {
                 [] => true /* unreachable */,
                 [exact] => exact == name,
                 [front, back] => name.starts_with(front) && name.ends_with(back),
                 [front, chunks @ .., back] => matchglob(name, front, chunks, back),
-            },
+            }
+            }
         }
     }
 }
@@ -1450,8 +1452,7 @@ pub struct SparseRegistryAuthProviderBundle<'sr>(pub Cow<'sr, [SparseRegistryAut
 impl<'sr> SparseRegistryAuthProviderBundle<'sr> {
     pub fn try(&self) -> Option<Cow<'sr, str>> {
         let SparseRegistryAuthProviderBundle(providers, install_cargo, repo_name, repo_url, token_env, token) = self;
-        providers
-            .iter()
+        providers.iter()
             .rev()
             .find_map(|p| match p {
                 SparseRegistryAuthProvider::TokenNoEnvironment => token.map(Cow::from),
@@ -1639,8 +1640,8 @@ impl<'sr> SparseRegistryAuthProviderBundle<'sr> {
 }
 
 /// Collect everything needed to get an authentication token for the given registry.
-pub fn auth_providers<'sr>(crates_file: &Path, cargo: &'sr OsStr, sparse_registries: &'sr SparseRegistryConfig, sparse: bool,
-                           repo_name: &'sr str, repo_url: &'sr str)
+pub fn auth_providers<'sr>(crates_file: &Path, cargo: &'sr OsStr, sparse_registries: &'sr SparseRegistryConfig, sparse: bool, repo_name: &'sr str,
+                           repo_url: &'sr str)
                            -> SparseRegistryAuthProviderBundle<'sr> {
     if !sparse {
         return SparseRegistryAuthProviderBundle(vec![].into(), cargo, "!sparse", "!sparse".into(), None, None);
