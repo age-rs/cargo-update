@@ -10,6 +10,7 @@ mod assert_index_path;
 mod registry_package;
 mod package_config;
 mod get_index_url;
+mod update_index;
 
 
 #[test]

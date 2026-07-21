@@ -860,7 +860,7 @@ pub struct CargoConfig {
     pub sparse_registries: SparseRegistryConfig,
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct HttpCargoConfig {
     pub cainfo: Option<PathBuf>,
     pub check_revoke: bool,
@@ -1844,7 +1844,7 @@ pub fn update_index<W: Write, A: AsRef<str>, I: Iterator<Item = A>>(index_repo: 
                 let mut retainer = |c: &mut (Option<CurlEasyHandle<SparseHandler<'_, '_, _>>>, Result<(), _>)| {
                     let pkg = mem::take(&mut c.0.as_mut().unwrap().get_mut().0);
                     match c.0.as_mut().unwrap().response_code().map_err(|e| format!("response_code: {}", e))? {
-                        200 => {
+                        0 | 200 => {
                             let (mut resp, buf) =
                                 mem::replace(&mut c.0.as_mut().unwrap().get_mut().1, Err("taken".into())).map_err(|e| format!("package {}: {}", pkg, e))?;
                             mem::replace(&mut c.1, Ok(())).map_err(|e| format!("package {}: {}", pkg, e))?;
