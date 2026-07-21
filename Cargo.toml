@@ -8,7 +8,7 @@ categories = ["development-tools::cargo-plugins"]
 license = "MIT"
 build = "build.rs"
 # Remember to also update in appveyor.yml
-version = "22.0.0"
+version = "22.1.0"
 # Remember to also update in man/*.md
 authors = ["наб <nabijaczleweli@nabijaczleweli.xyz>",
            "Yann Simon <yann.simon.fr@gmail.com>",
@@ -45,7 +45,8 @@ authors = ["наб <nabijaczleweli@nabijaczleweli.xyz>",
            "Rene Leonhardt",
            "Maxime Guerreiro <maxime@cloudflare.com>",
            "Brian",
-           "xtqqczze"]
+           "xtqqczze",
+           "Johannes Horner <j.horner@commend.com>"]
 exclude = ["*.enc"]
 edition = '2015'
 rust-version = "1.86"
