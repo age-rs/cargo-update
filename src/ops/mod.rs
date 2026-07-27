@@ -1869,7 +1869,11 @@ pub fn update_index<W: Write, A: AsRef<str>, I: Iterator<Item = A>>(index_repo: 
                             registry.insert(pkg, resp);
                             Ok(false)
                         }
-                        rc @ 404 | rc @ 410 | rc @ 451 => Err(format!("package {} doesn't exist: HTTP {}", pkg, rc)),
+                        404 => {
+                            sucker.remove2(c.0.take().unwrap()).map_err(|e| format!("remove2: {}", e))?;
+                            Ok(false)
+                        }
+                        rc @ 410 | rc @ 451 => Err(format!("package {} doesn't exist: HTTP {}", pkg, rc)),
                         rc @ 408 | rc @ 429 | rc @ 503 | rc @ 504 => {
                             if attempt == ATTEMPTS - 1 {
                                 Err(format!("package {}: HTTP {} after {} attempts", pkg, rc, ATTEMPTS))
