@@ -152,7 +152,8 @@ fn actual_main() -> Result<(), i32> {
         })
     }))?;
 
-    for package in &mut packages {
+    let mut not_in_registry = vec![];
+    for (pi, package) in packages.iter_mut().enumerate() {
         let registry_idx = match registries.iter().position(|(.., pkg_names)| pkg_names.contains(&package.name)) {
             Some(i) => i,
             None => {
@@ -162,10 +163,12 @@ fn actual_main() -> Result<(), i32> {
         };
 
         let install_prereleases = configuration.get(&package.name).and_then(|c| c.install_prereleases);
-        package.pull_version(&latest_registries[registry_idx],
-                             &registry_repos[registry_idx],
-                             install_prereleases,
-                             opts.released_after);
+        if !package.pull_version(&latest_registries[registry_idx],
+                                 &registry_repos[registry_idx],
+                                 install_prereleases,
+                                 opts.released_after) {
+            not_in_registry.push(pi);
+        }
     }
 
     if !opts.quiet {
@@ -216,7 +219,9 @@ fn actual_main() -> Result<(), i32> {
         out.flush().unwrap();
     }
 
-    note_removed_executables(&opts, packages.iter().map(|p| (&p.name, &p.executables)));
+    note_removed_packages_and_executables(&opts,
+                                          packages.iter().enumerate().map(|(i, p)| (&p.name, &p.executables, not_in_registry.binary_search(&i).is_err())));
+    drop(not_in_registry);
 
     let jobserver_jobs = opts.recursive_jobs.map(|nz| nz.get()).unwrap_or(1);
     let jobserver = jobserver::Client::new(jobserver_jobs).expect("jobserver");
@@ -410,7 +415,7 @@ fn actual_main() -> Result<(), i32> {
                 out.flush().unwrap();
             }
 
-            note_removed_executables(&opts, packages.iter().map(|p| (&p.name, &p.executables)));
+            note_removed_packages_and_executables(&opts, packages.iter().map(|p| (&p.name, &p.executables, true)));
 
             if opts.update {
                 if !opts.force {
@@ -564,7 +569,7 @@ fn actual_main() -> Result<(), i32> {
 }
 
 
-fn note_removed_executables<'a, T: Iterator<Item = (&'a String, &'a Vec<String>)>>(opts: &cargo_update::Options, packages: T) {
+fn note_removed_packages_and_executables<'a, T: Iterator<Item = (&'a String, &'a Vec<String>, bool)>>(opts: &cargo_update::Options, packages: T) {
     if opts.quiet {
         return;
     }
@@ -577,17 +582,26 @@ fn note_removed_executables<'a, T: Iterator<Item = (&'a String, &'a Vec<String>)
     // •   $HOME/.cargo                             same
     let mut any = false;
     let bindir = opts.cargo_dir.1.join("bin");
-    for (name, executables) in packages {
-        let mut first = true;
+    for (name, executables, in_registry) in packages {
+        let mut removed_executables = false;
         for e in executables.iter().filter(|e| !fs::exists(bindir.join(e)).unwrap_or(false)) {
-            if mem::replace(&mut first, false) {
+            if !mem::replace(&mut removed_executables, true) {
                 print!("{} contains removed executables ({}", name, e);
             } else {
                 print!(", {}", e);
             }
         }
-        if !first {
-            println!("), which will be re-installed on update — you can remove it with cargo uninstall {}", name);
+        if removed_executables {
+            print!(")");
+            if in_registry {
+                print!(", which will be re-installed on update");
+            }
+        }
+        if !in_registry {
+            print!("{} is no longer part of its registry", if removed_executables { " and" } else { name });
+        }
+        if removed_executables || !in_registry {
+            println!(" — you can remove it with cargo uninstall {}", name);
             any = true;
         }
     }

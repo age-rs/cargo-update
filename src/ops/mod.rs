@@ -281,24 +281,14 @@ impl RegistryPackage {
     }
 
     /// Read the version list for this crate off the specified repository tree and set the latest and alternative versions.
+    ///
+    /// Returns `false` if the package wasn't in the given registry
     pub fn pull_version(&mut self, registry: &RegistryTree, registry_parent: &Registry, install_prereleases: Option<bool>,
-                        released_after: Option<DateTime<Utc>>) {
-        let mut vers_git;
-        let vers = match (registry, registry_parent) {
-            (RegistryTree::Git(registry), Registry::Git(registry_parent)) => {
-                vers_git = find_package_data(&self.name, registry, registry_parent)
-                    .ok_or_else(|| format!("package {} not found", self.name))
-                    .and_then(|pd| crate_versions(pd.content()).map_err(|e| format!("package {}: {}", self.name, e)))
-                    .unwrap();
-                vers_git.sort();
-                &vers_git
-            }
-            (RegistryTree::Sparse, Registry::Sparse(registry_parent)) => &registry_parent[&self.name],
-            _ => unreachable!(),
-        };
-
+                        released_after: Option<DateTime<Utc>>) -> bool {
         self.newest_version = None;
         self.alternative_version = None;
+
+        let Some(vers) = self.versions(registry, registry_parent) else { return false };
 
         let mut vers = vers.iter()
             .rev()
@@ -318,6 +308,21 @@ impl RegistryPackage {
                     self.newest_version = Some(newest_nonpre.clone());
                 }
             }
+        }
+        true
+    }
+
+    fn versions<'r>(&mut self, registry: &RegistryTree, registry_parent: &'r Registry) -> Option<Cow<'r, [(Semver, Option<DateTime<FixedOffset>>)]>> {
+        match (registry, registry_parent) {
+            (RegistryTree::Git(registry), Registry::Git(registry_parent)) => {
+                let mut vers_git = crate_versions(find_package_data(&self.name, registry, registry_parent)?.content())
+                    .map_err(|e| format!("package {}: {}", self.name, e))
+                    .unwrap();
+                vers_git.sort();
+                Some(Cow::Owned(vers_git))
+            }
+            (RegistryTree::Sparse, Registry::Sparse(registry_parent)) => registry_parent.get(&self.name).map(Cow::from),
+            _ => unreachable!(),
         }
     }
 
